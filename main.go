@@ -62,17 +62,12 @@ func StartEmailWorker() {
                 job.Body
 
 
-			fmt.Println("\n==========================================")
-            fmt.Println("🚀 WORKER ZDJĄŁ ZADANIE Z KOLEJKI:")
-            fmt.Println(messageString)
-            fmt.Println("==========================================")
-
             var messageBytes []byte = []byte(messageString)
             var sendErr error = smtp.SendMail(smtpAddress, auth, SMTP_LOGIN, to, messageBytes)
             if sendErr != nil {
-                fmt.Println("CRITICAL: Nie udało się wysłać maila z kolejki. Błąd:", sendErr)
+                fmt.Println("CRITICAL! Error:", sendErr)
             } else {
-                fmt.Println("SUCCESS: Mail z kolejki został wysłany.")
+                fmt.Println("SUCCESS")
             }
 		}
 	}()
@@ -157,7 +152,7 @@ func main()  {
         writer.WriteHeader(http.StatusOK)
         writer.Write([]byte("OK"))
     })
-	
+
 	http.HandleFunc("/api/proxy", func (writer http.ResponseWriter, read *http.Request) {
 		
 		//PREFLIGHT ORIGIN CHECK
