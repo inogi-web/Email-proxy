@@ -39,18 +39,21 @@ var SMTP_PASSWORD string = os.Getenv("SMTP_PASSWORD")
 var SMTP_PORT = os.Getenv("SMTP_PORT")
 var SMTP_HOST = os.Getenv("SMTP_HOST")
 var EMAIL_DESTINATION string = os.Getenv("EMAIL_DESTINATION")
+var ALLOWED_ORIGINS_MAP map[string]bool = make(map[string]bool)
+
 var FORM Form
 
 var emailQueue chan EmailJob = make(chan EmailJob, 100)
 
-
-var ALLOWED_ORIGINS_MAP map[string]bool = map[string]bool{
-	"https://inogi.pl": true,
-	"https://www.inogi.pl": true,
-	"http://www.inogi.pl": true,
-	"http://inogi.pl": true,
-}
+// var ALLOWED_ORIGINS_MAP map[string]bool = map[string]bool{
+// 	"https://inogi.pl": true,
+// 	"https://www.inogi.pl": true,
+// 	"http://www.inogi.pl": true,
+// 	"http://inogi.pl": true,
+// }
 //
+
+
 func StartEmailWorker() {
 	go func() {
 		var smtpAddress string  = SMTP_HOST + ":" + SMTP_PORT
@@ -138,6 +141,20 @@ func clientIP(read *http.Request) string{
 		}
 		return clientIPAddress
 } 
+
+func init() {
+	var originsEnv string = os.Getenv("ALLOWED_ORIGINS")
+	if originsEnv == "" {
+        fmt.Println("Error, lack of allowed origins")
+        return
+    }
+	var originsList []string = strings.Split(originsEnv, ",")
+
+	for _, origin := range originsList {
+        var cleanOrigin string = strings.TrimSpace(origin)
+        ALLOWED_ORIGINS_MAP[cleanOrigin] = true
+    }
+}
 
 func main()  {
 	//LIMITER(CHANCES, MINUTES)
