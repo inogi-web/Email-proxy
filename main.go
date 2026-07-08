@@ -153,6 +153,11 @@ func main()  {
 
 	StartEmailWorker()
 
+	http.HandleFunc("/health", func(writer http.ResponseWriter, read *http.Request) {
+        writer.WriteHeader(http.StatusOK)
+        writer.Write([]byte("OK"))
+    })
+	
 	http.HandleFunc("/api/proxy", func (writer http.ResponseWriter, read *http.Request) {
 		
 		//PREFLIGHT ORIGIN CHECK
