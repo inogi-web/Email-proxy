@@ -19,12 +19,12 @@ type Form struct {
     Email       string `json:"email"`
     Interest    string `json:"interest"`
     Description string `json:"description"`
-    WebsiteURL  string `json:"website_url"` // Nasz Honeypot
+    WebsiteURL  string `json:"website_url"`
 }
 
 type RateLimiter struct {
-	mutex sync.Mutex // blokada kodu by był jednowątkowy
-	ip_adresses map[string]int //adres ip string  + liczba występowań int
+	mutex sync.Mutex 
+	ip_adresses map[string]int 
 	limit int
 }
 
@@ -44,15 +44,6 @@ var ALLOWED_ORIGINS_MAP map[string]bool = make(map[string]bool)
 var FORM Form
 
 var emailQueue chan EmailJob = make(chan EmailJob, 100)
-
-// var ALLOWED_ORIGINS_MAP map[string]bool = map[string]bool{
-// 	"https://inogi.pl": true,
-// 	"https://www.inogi.pl": true,
-// 	"http://www.inogi.pl": true,
-// 	"http://inogi.pl": true,
-// }
-//
-
 
 func StartEmailWorker() {
 	go func() {
