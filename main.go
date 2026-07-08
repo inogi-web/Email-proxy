@@ -39,6 +39,7 @@ var SMTP_PASSWORD string = os.Getenv("SMTP_PASSWORD")
 var SMTP_PORT = os.Getenv("SMTP_PORT")
 var SMTP_HOST = os.Getenv("SMTP_HOST")
 var EMAIL_DESTINATION string = os.Getenv("EMAIL_DESTINATION")
+var ALLOWED_ORIGINS string = os.Getenv("ALLOWED_ORIGINS")
 var ALLOWED_ORIGINS_MAP map[string]bool = make(map[string]bool)
 
 var FORM Form
@@ -134,12 +135,11 @@ func clientIP(read *http.Request) string{
 } 
 
 func init() {
-	var originsEnv string = os.Getenv("ALLOWED_ORIGINS")
-	if originsEnv == "" {
+	if ALLOWED_ORIGINS == "" {
         fmt.Println("Error, lack of allowed origins")
         return
     }
-	var originsList []string = strings.Split(originsEnv, ",")
+	var originsList []string = strings.Split(ALLOWED_ORIGINS, ",")
 
 	for _, origin := range originsList {
         var cleanOrigin string = strings.TrimSpace(origin)
