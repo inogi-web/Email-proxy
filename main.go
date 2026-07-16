@@ -57,8 +57,12 @@ var emailQueue chan EmailJob = make(chan EmailJob, 100)
 
 
 func SendNtfyMessage(FORM Form) error{
-	var messageBody string = fmt.Sprintf("Nazwa klienta: %s\r\nAdres Email klienta: %s\r\nWiadomość: %s", FORM.Name, FORM.Email, FORM.Description)
-	
+	var messageBody string = fmt.Sprintf(
+        "**👤 Klient:** %s\n**✉️ Email:** %s\n\n**📝 Wiadomość:**\n%s", 
+        FORM.Name, 
+        FORM.Email, 
+        FORM.Description,
+    )	
 	var req *http.Request
 	var err error
 	req, err = http.NewRequest("POST", NTFY_URL, strings.NewReader(messageBody))
@@ -70,6 +74,7 @@ func SendNtfyMessage(FORM Form) error{
 	req.Header.Set("Title", FORM.Interest)
 	req.Header.Set("Priority", "4")
 	req.Header.Set("Tags", "new, rotating_light")
+	req.Header.Set("Markdown", "yes")
 
 	var client *http.Client = &http.Client{
 		Timeout: 10 * time.Second,
