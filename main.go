@@ -22,6 +22,13 @@ type Form struct {
     WebsiteURL  string `json:"website_url"`
 }
 
+type Ntfy_message struct {
+	priority string
+	title string
+	tags string
+	message string
+}
+
 type RateLimiter struct {
 	mutex sync.Mutex 
 	ip_adresses map[string]int 
@@ -31,6 +38,7 @@ type RateLimiter struct {
 type EmailJob struct {
     Subject string
     Body    string
+	FormData Form
 }
 
 // public variables
@@ -41,11 +49,47 @@ var SMTP_HOST = os.Getenv("SMTP_HOST")
 var EMAIL_DESTINATION string = os.Getenv("EMAIL_DESTINATION")
 var ALLOWED_ORIGINS string = os.Getenv("ALLOWED_ORIGINS")
 var ALLOWED_ORIGINS_MAP map[string]bool = make(map[string]bool)
-
-var FORM Form
+// ntfy variables
+var NTFY_URL string = os.Getenv("NTFY_URL")
+var NTFY_TOKEN string = os.Getenv("NTFY_TOKEN")
 
 var emailQueue chan EmailJob = make(chan EmailJob, 100)
 
+
+func SendNtfyMessage(FORM Form) error{
+	var messageBody string = fmt.Sprintf("Nazwa klienta: %s\r\nAdres Email klienta: %s\r\nWiadomość: %s", FORM.Name, FORM.Email, FORM.Description)
+	
+	var req *http.Request
+	var err error
+	req, err = http.NewRequest("POST", NTFY_URL, strings.NewReader(messageBody))
+
+	if err != nil {
+		return fmt.Errorf("błąd podczas tworzenia żądania: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+NTFY_TOKEN)
+	req.Header.Set("Title", FORM.Interest)
+	req.Header.Set("Priority", "4")
+	req.Header.Set("Tags", "new, rotating_light")
+
+	var client *http.Client = &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	var resp *http.Response
+	resp, err = client.Do(req)
+
+	if err != nil {
+		return fmt.Errorf("błąd podczas wysyłania wiadomości do ntfy: %w", err)
+	}
+	
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("ntfy zwróciło nieoczekiwany status: %s", resp.Status)
+	}
+
+	return nil
+}
 func StartEmailWorker() {
 	go func() {
 		var smtpAddress string  = SMTP_HOST + ":" + SMTP_PORT
@@ -68,6 +112,13 @@ func StartEmailWorker() {
                 fmt.Println("CRITICAL! Error:", sendErr)
             } else {
                 fmt.Println("SUCCESS")
+            }
+
+			var ntfyErr error = SendNtfyMessage(job.FormData)
+            if ntfyErr != nil {
+                fmt.Println("CRITICAL! Ntfy Error:", ntfyErr)
+            } else {
+                fmt.Println("NTFY SUCCESS")
             }
 		}
 	}()
@@ -251,6 +302,7 @@ func main()  {
         var newJob EmailJob = EmailJob{
             Subject: subject,
             Body:    body,
+			FormData: formData,
         }
 
 		emailQueue <- newJob
